@@ -62,8 +62,9 @@ CENNIK = {
     }
 }
 
-# --- 3. PASEK BOCZNY ---
-st.sidebar.image("https://cdn-icons-png.flaticon.com/512/4336/4336544.png", width=100)
+# --- 3. PASEK BOCZNY (Z NOWĄ GRAFIKĄ NARZĘDZI) ---
+# Zastąpiono ikonę domu ikoną skrzynki z narzędziami
+st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3523/3523887.png", width=100)
 st.sidebar.title(SOCIAL)
 st.sidebar.markdown(f"""
 ### 📞 Kontakt
@@ -138,20 +139,3 @@ if suma_netto > 0:
             st.error("Wpisz nazwę klienta lub adres inwestycji!")
         else:
             df = pd.DataFrame(wybrane_uslugi)
-            
-            st.markdown(f"### Oferta dla: {klient}")
-            st.table(df[["Usługa", "Ilość", "Cena jedn. (zł)", "Wartość (zł)"]])
-            
-            # Tekst do pobrania
-            raport_txt = f"OFERTA: {FIRMA}\nDLA: {klient}\nDATA: {data_dzis}\n"
-            raport_txt += "="*40 + "\n"
-            for _, row in df.iterrows():
-                raport_txt += f"- {row['Usługa']}: {row['Ilość']} x {row['Cena jedn. (zł)']} = {row['Wartość (zł)']:.2f} zł\n"
-            raport_txt += "="*40 + f"\nSUMA NETTO: {suma_netto:,.2f} zł\nVAT {vat_rate}%: {suma_vat:,.2f} zł\nBRUTTO: {suma_brutto:,.2f} zł\n"
-            
-            st.download_button(
-                label="📥 Pobierz gotowy plik oferty",
-                data=raport_txt,
-                file_name=f"Oferta_{klient}_{data_dzis}.txt",
-                mime="text/plain"
-            )
