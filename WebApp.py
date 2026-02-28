@@ -40,12 +40,12 @@ st.sidebar.image("https://cdn-icons-png.flaticon.com/512/4336/4336544.png", widt
 st.sidebar.title("RenovationsArt") # Poprawione: dodano cudzysłów
 st.sidebar.markdown("""
 ### 📞 Kontakt
-**Instagram:** [@renovations.art](https://instagram.com)  
-**Telefon:** +48 XXX XXX XXX  
-**E-mail:** kontakt@renovationsart.pl  
+**Instagram:** [@renovations.art](https://facebook.pl)  
+**Telefon:** +48 601-403-157 
+**E-mail:** renovationsartstg@gmail.com 
 
 ---
-*Działamy na terenie całego województwa.*
+*Działamy na terenie Starogardu Gdańskiego i okolic 50km.*
 """)
 
 # --- 4. STRONA GŁÓWNA ---
@@ -118,3 +118,4 @@ if suma_netto > 0:
             st.download_button("Pobierz plik tekstowy", raport, file_name=f"Wycena_{klient}.txt")
 else:
     st.info("Dodaj ilości przy wybranych usługach, aby zobaczyć podsumowanie.")
+
