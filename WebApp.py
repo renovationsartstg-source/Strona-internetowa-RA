@@ -131,9 +131,5 @@ if suma_netto > 0:
             st.text_area("Podgląd:", raport, height=200)
             st.download_button("📥 Pobierz plik .txt", raport, file_name=f"Oferta_{klient}.txt")
 
-# --- 6. PORTFOLIO ---
-st.divider()
-st.header("📸 Nasza Realizacja")
-st.image("https://www.facebook.com/photo.php?fbid=122127453680768335&set=pb.61573050055532.-2207520000&type=3")
 
 
