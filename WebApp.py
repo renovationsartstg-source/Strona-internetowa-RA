@@ -134,5 +134,6 @@ if suma_netto > 0:
 # --- 6. PORTFOLIO ---
 st.divider()
 st.header("📸 Nasza Realizacja")
-st.image("https://www.facebook.com/photo.php?fbid=122127453680768335&set=pb.61573050055532.-2207520000&type=3", use_container_width=True)
+st.image("https://www.facebook.com/photo.php?fbid=122127453680768335&set=pb.61573050055532.-2207520000&type=3")
+
 
