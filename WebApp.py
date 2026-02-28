@@ -1,144 +1,134 @@
 import streamlit as st
 import datetime
 import pandas as pd
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # --- 1. KONFIGURACJA STRONY ---
 st.set_page_config(
-    page_title="RenovationsArt - Remonty i Wykończenia", 
+    page_title="RenovationsArt - Kalkulator", 
     page_icon="🏗️",
     layout="wide"
 )
 
-# --- STYLE CSS (KOLORYSTYKA BUDOWLANA) ---
+# --- FUNKCJA WYSYŁKI EMAIL ---
+def send_email(klient_name, tresc_oferty):
+    # DANE KONFIGURACYJNE (Wpisz swoje dane)
+    sender_email = "TWOJ_EMAIL@gmail.com"
+    receiver_email = "renovationsartstg@gmail.com"
+    password = "TWOJE_HASLO_APLIKACJI" # W Gmailu musisz wygenerować "Hasło do aplikacji"
+
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+    msg['Subject'] = f"Nowa wycena: {klient_name}"
+
+    msg.attach(MIMEText(tresc_oferty, 'plain'))
+
+    try:
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender_email, password)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Błąd wysyłki: {e}")
+        return False
+
+# --- STYLE CSS ---
 st.markdown("""
     <style>
-    .stApp {
-        background-color: #f8f9fa;
-    }
+    .stApp { background-color: #f8f9fa; }
     .stButton>button {
         background-color: #ff8c00;
         color: white;
         border-radius: 8px;
         font-weight: bold;
-        border: none;
-        width: 100%;
-    }
-    .stMetric {
-        background-color: #ffffff;
-        padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    h1, h2, h3 {
-        color: #2c3e50;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. DANE FIRMY I CENNIK ---
+# --- 2. DANE I CENNIK ---
 FIRMA = "RenovationsArt"
 SOCIAL = "@renovations.art"
 CENNIK = {
     "Stan Surowy": {
         "Wykop pod fundamenty (m3)": 75, "Wylanie ław (m2)": 140,
-        "Murowanie nośne (m2)": 125, "Murowanie działowe (m2)": 62,
-        "Wykonanie stropu (m2)": 107, "Więźba dachowa (m2)": 77,
-        "Pokrycie dachu (m2)": 100
+        "Murowanie nośne (m2)": 125, "Murowanie działowe (m2)": 62
     },
     "Wykończenia": {
         "Tynkowanie maszynowe (m2)": 46, "Gładź gipsowa (m2)": 52,
-        "Malowanie 2x (m2)": 28, "Sufit podwieszany G-K (m2)": 135,
-        "Płytki standard (m2)": 135, "Gres wielki format (m2)": 210,
-        "Panele podłogowe (m2)": 62, "Montaż drzwi wew. (szt)": 525
+        "Malowanie 2x (m2)": 28, "Płytki standard (m2)": 135
     },
     "Instalacje": {
-        "Punkt elektryczny (szt)": 110, "Punkt wod-kan (szt)": 175,
-        "Ogrzewanie podłogowe (m2)": 307, "Biały montaż WC/Umyw. (szt)": 200,
-        "Biały montaż Wanna/Kab. (szt)": 500
+        "Punkt elektryczny (szt)": 110, "Punkt wod-kan (szt)": 175
     },
-    "Wyburzenia i Inne": {
-        "Skuwanie płytek (m2)": 55, "Wyburzanie ścian (m2)": 140,
-        "Prace dodatkowe (h)": 90, "Utylizacja gruzu (szt)": 250
+    "Wyburzenia": {
+        "Skuwanie płytek (m2)": 55, "Wyburzanie ścian (m2)": 140
     }
 }
 
 # --- 3. PASEK BOCZNY ---
-st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3523/3523887.png", width=100)
 st.sidebar.title(SOCIAL)
 st.sidebar.markdown(f"""
 ### 📞 Kontakt
 **Telefon:** +48 601-403-157  
 **E-mail:** renovationsartstg@gmail.com  
-**Lokalizacja:** Starogard Gdański i okolice (50km)  
-
----
-*Gwarantujemy terminowość i czystość na budowie.*
 """)
 
 # --- 4. STRONA GŁÓWNA ---
-st.title(f"🏠 {FIRMA} - Solidne Remonty i Budowa")
-st.write("Witamy! Specjalizujemy się w kompleksowych wykończeniach wnętrz oraz stanach surowych. Skorzystaj z kalkulatora poniżej, aby otrzymać wstępną wycenę.")
-
-col_a, col_b, col_c = st.columns(3)
-col_a.success("✅ **Bezpyłowe gładzie**")
-col_b.success("✅ **Gwarancja 24 m-ce**")
-col_c.success("✅ **Czystość po pracy**")
-
-st.divider()
-
-# --- 5. KALKULATOR ---
-st.header("🧮 Kalkulator darmowej wyceny")
-klient = st.text_input("Nazwa Klienta / Adres inwestycji", placeholder="np. Mieszkanie ul. Polna")
+st.title(f"🏠 {FIRMA} - System Ofertowy")
+klient = st.text_input("Nazwa Klienta / Inwestycji", placeholder="np. Jan Kowalski, Starogard")
 data_dzis = datetime.date.today().strftime("%d-%m-%Y")
 
 wybrane_uslugi = []
 suma_netto = 0
 
-tabs = st.tabs(["🧱 Stan Surowy", "✨ Wykończenia", "🚰 Instalacje", "🔨 Wyburzenia"])
-
+tabs = st.tabs(list(CENNIK.keys()))
 for i, kategoria in enumerate(CENNIK.keys()):
     with tabs[i]:
         for usluga, cena in CENNIK[kategoria].items():
             c1, c2, c3 = st.columns([3, 1, 1])
-            with c1:
-                st.write(f"**{usluga}**")
-                st.caption(f"Cena: {cena} zł/jedn.")
-            with c2:
-                ilosc = st.number_input("Ilość", min_value=0.0, step=1.0, key=f"{usluga}_{i}")
-            with c3:
-                wartosc = ilosc * cena
-                st.write(f"Wartość: **{wartosc:,.2f} zł**")
-            
+            ilosc = c2.number_input("Ilość", min_value=0.0, step=1.0, key=f"{usluga}_{i}")
+            wartosc = ilosc * cena
+            c1.write(f"**{usluga}** ({cena} zł/j)")
+            c3.write(f"{wartosc:,.2f} zł")
             if ilosc > 0:
-                wybrane_uslugi.append({
-                    "Kategoria": kategoria,
-                    "Usługa": usluga,
-                    "Ilość": ilosc,
-                    "Cena jedn. (zł)": cena,
-                    "Wartość (zł)": wartosc
-                })
+                wybrane_uslugi.append({"Usługa": usluga, "Ilość": ilosc, "Wartość": wartosc})
                 suma_netto += wartosc
-        st.divider()
 
-# --- 6. PODSUMOWANIE I GENEROWANIE RAPORTU ---
+# --- 5. PODSUMOWANIE I WYSYŁKA ---
 if suma_netto > 0:
-    st.subheader("📊 Podsumowanie Twojej wyceny")
-    vat_rate = st.selectbox("Stawka VAT", [8, 23], help="8% dla osób prywatnych, 23% dla firm")
+    st.divider()
+    vat_rate = st.selectbox("Stawka VAT", [8, 23])
+    suma_brutto = suma_netto * (1 + vat_rate/100)
     
-    suma_vat = suma_netto * (vat_rate / 100)
-    suma_brutto = suma_netto + suma_vat
+    st.metric("Suma do zapłaty (Brutto)", f"{suma_brutto:,.2f} zł")
 
-    c_n, c_v, c_b = st.columns(3)
-    c_n.metric("Suma Netto", f"{suma_netto:,.2f} zł")
-    c_v.metric(f"VAT {vat_rate}%", f"{suma_vat:,.2f} zł")
-    c_b.metric("DO ZAPŁATY (Brutto)", f"{suma_brutto:,.2f} zł")
-
-    if st.button("📄 Przygotuj profesjonalną ofertę"):
+    if st.button("📄 Generuj ofertę i wyślij powiadomienie"):
         if not klient:
-            st.error("Wpisz nazwę klienta lub adres inwestycji!")
+            st.error("Wpisz nazwę klienta!")
         else:
-            df = pd.DataFrame(wybrane_uslugi)
-            st.markdown(f"### Oferta dla: {klient}")
-            st.table(df[["Usługa", "Ilość", "Cena jedn. (zł)", "Wartość (zł)"]])
+            # Tworzenie treści oferty
+            raport = f"OFERTA DLA: {klient}\nData: {data_dzis}\n" + "="*30 + "\n"
+            for item in wybrane_uslugi:
+                raport += f"- {item['Usługa']}: {item['Ilość']} = {item['Wartość']:.2f} zł\n"
+            raport += "="*30 + f"\nRAZEM BRUTTO: {suma_brutto:,.2f} zł"
+
+            # WYSYŁKA EMAIL
+            sukces = send_email(klient, raport)
             
-            # POPRAWIONA LINIA 116 -
+            if sukces:
+                st.success("✅ Oferta wygenerowana i wysłana na Twój e-mail!")
+            else:
+                st.warning("⚠️ Oferta wygenerowana, ale wystąpił błąd wysyłki e-mail (sprawdź konfigurację hasła).")
+            
+            st.text_area("Podgląd oferty:", raport, height=200)
+            st.download_button("📥 Pobierz plik .txt", raport, file_name=f"Oferta_{klient}.txt")
+
+# --- 6. PORTFOLIO ---
+st.divider()
+st.header("📸 Nasza Realizacja")
+st.image("https://scontent.fktw4-1.fna.fbcdn.net/v/t39.30808-6/475454641_122127453680768335_3612053243163351315_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=127cfc&_nc_ohc=G6YV3TzX_S8Q7kNvgG_V7p6&_nc_zt=23&_nc_ht=scontent.fktw4-1.fna.fbcdn.net&oh=00_AYB_your_oh_here&oe=67C8D84D", use_container_width=True)
