@@ -9,8 +9,35 @@ st.set_page_config(
     layout="wide"
 )
 
+# --- STYLE CSS (KOLORYSTYKA BUDOWLANA) ---
+st.markdown("""
+    <style>
+    .stApp {
+        background-color: #f8f9fa;
+    }
+    .stButton>button {
+        background-color: #ff8c00;
+        color: white;
+        border-radius: 8px;
+        font-weight: bold;
+        border: none;
+        width: 100%;
+    }
+    .stMetric {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    h1, h2, h3 {
+        color: #2c3e50;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 # --- 2. DANE FIRMY I CENNIK ---
 FIRMA = "RenovationsArt"
+SOCIAL = "@renovations.art"
 CENNIK = {
     "Stan Surowy": {
         "Wykop pod fundamenty (m3)": 75, "Wylanie ław (m2)": 140,
@@ -35,33 +62,33 @@ CENNIK = {
     }
 }
 
-# --- 3. PASEK BOCZNY (NAPRAWIONY BŁĄD SKŁADNI) ---
+# --- 3. PASEK BOCZNY ---
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/4336/4336544.png", width=100)
-st.sidebar.title("RenovationsArt") # Poprawione: dodano cudzysłów
-st.sidebar.markdown("""
+st.sidebar.title(SOCIAL)
+st.sidebar.markdown(f"""
 ### 📞 Kontakt
-**Instagram:** [@renovations.art](https://facebook.pl)  
-**Telefon:** +48 601-403-157 
-**E-mail:** renovationsartstg@gmail.com 
+**Telefon:** +48 601-403-157  
+**E-mail:** renovationsartstg@gmail.com  
+**Lokalizacja:** Starogard Gdański i okolice (50km)  
 
 ---
-*Działamy na terenie Starogardu Gdańskiego i okolic 50km.*
+*Gwarantujemy terminowość i czystość na budowie.*
 """)
 
 # --- 4. STRONA GŁÓWNA ---
-st.title(f"🏠 {FIRMA} - System Ofertowy")
-st.write("Witaj! Wybierz zakres prac, aby otrzymać błyskawiczną wycenę swojej inwestycji.")
+st.title(f"🏠 {FIRMA} - Solidne Remonty i Budowa")
+st.write("Witamy! Specjalizujemy się w kompleksowych wykończeniach wnętrz oraz stanach surowych. Skorzystaj z kalkulatora poniżej, aby otrzymać wstępną wycenę.")
 
-# Sekcja atutów
-c1, c2, c3 = st.columns(3)
-c1.info("🛠️ **Profesjonalny sprzęt**")
-c2.info("📅 **Terminowość**")
-c3.info("📝 **Umowa i Gwarancja**")
+col_a, col_b, col_c = st.columns(3)
+col_a.success("✅ **Bezpyłowe gładzie**")
+col_b.success("✅ **Gwarancja 24 m-ce**")
+col_c.success("✅ **Czystość po pracy**")
 
 st.divider()
 
-# --- 5. FORMULARZ I KALKULATOR ---
-klient = st.text_input("Nazwa Klienta / Inwestycji", placeholder="np. Remont mieszkania ul. Jasna")
+# --- 5. KALKULATOR ---
+st.header("🧮 Kalkulator darmowej wyceny")
+klient = st.text_input("Nazwa Klienta / Adres inwestycji", placeholder="np. Mieszkanie ul. Polna")
 data_dzis = datetime.date.today().strftime("%d-%m-%Y")
 
 wybrane_uslugi = []
@@ -72,50 +99,59 @@ tabs = st.tabs(["🧱 Stan Surowy", "✨ Wykończenia", "🚰 Instalacje", "🔨
 for i, kategoria in enumerate(CENNIK.keys()):
     with tabs[i]:
         for usluga, cena in CENNIK[kategoria].items():
-            col1, col2, col3 = st.columns([3, 1, 1])
-            with col1:
+            c1, c2, c3 = st.columns([3, 1, 1])
+            with c1:
                 st.write(f"**{usluga}**")
-                st.caption(f"Cena: {cena} zł")
-            with col2:
-                # Unikalny klucz zapobiega błędom Streamlit
-                ilosc = st.number_input("Ilość", min_value=0.0, step=1.0, key=f"input_{usluga}_{i}")
-            with col3:
+                st.caption(f"Cena: {cena} zł/jedn.")
+            with c2:
+                ilosc = st.number_input("Ilość", min_value=0.0, step=1.0, key=f"{usluga}_{i}")
+            with c3:
                 wartosc = ilosc * cena
-                st.write(f"Suma: **{wartosc:,.2f}** zł")
+                st.write(f"Wartość: **{wartosc:,.2f} zł**")
             
             if ilosc > 0:
                 wybrane_uslugi.append({
+                    "Kategoria": kategoria,
                     "Usługa": usluga,
                     "Ilość": ilosc,
-                    "Cena jedn.": f"{cena} zł",
-                    "Wartość": wartosc
+                    "Cena jedn. (zł)": cena,
+                    "Wartość (zł)": wartosc
                 })
                 suma_netto += wartosc
         st.divider()
 
-# --- 6. PODSUMOWANIE I POBIERANIE ---
+# --- 6. PODSUMOWANIE I GENEROWANIE RAPORTU ---
 if suma_netto > 0:
-    st.sidebar.header("💰 Twoja Wycena")
-    vat_rate = st.sidebar.radio("Stawka VAT", [8, 23], index=0)
+    st.subheader("📊 Podsumowanie Twojej wyceny")
+    vat_rate = st.selectbox("Stawka VAT", [8, 23], help="8% dla osób prywatnych, 23% dla firm")
     
     suma_vat = suma_netto * (vat_rate / 100)
     suma_brutto = suma_netto + suma_vat
 
-    st.sidebar.write(f"Netto: {suma_netto:,.2f} zł")
-    st.sidebar.write(f"VAT: {suma_vat:,.2f} zł")
-    st.sidebar.subheader(f"Razem: {suma_brutto:,.2f} zł")
+    c_n, c_v, c_b = st.columns(3)
+    c_n.metric("Suma Netto", f"{suma_netto:,.2f} zł")
+    c_v.metric(f"VAT {vat_rate}%", f"{suma_vat:,.2f} zł")
+    c_b.metric("DO ZAPŁATY (Brutto)", f"{suma_brutto:,.2f} zł")
 
-    if st.button("🚀 Generuj gotowy dokument"):
+    if st.button("📄 Przygotuj profesjonalną ofertę"):
         if not klient:
-            st.warning("Uzupełnij nazwę klienta na górze strony!")
+            st.error("Wpisz nazwę klienta lub adres inwestycji!")
         else:
-            raport = f"WYCENA DLA: {klient}\nDATA: {data_dzis}\n" + "-"*30 + "\n"
-            for item in wybrane_uslugi:
-                raport += f"{item['Usługa']} | {item['Ilość']} x {item['Cena jedn.']} = {item['Wartość']:.2f} zł\n"
-            raport += "-"*30 + f"\nDO ZAPŁATY BRUTTO: {suma_brutto:,.2f} zł"
+            df = pd.DataFrame(wybrane_uslugi)
             
-            st.text_area("Podgląd PDF/TXT", raport, height=200)
-            st.download_button("Pobierz plik tekstowy", raport, file_name=f"Wycena_{klient}.txt")
-else:
-    st.info("Dodaj ilości przy wybranych usługach, aby zobaczyć podsumowanie.")
-
+            st.markdown(f"### Oferta dla: {klient}")
+            st.table(df[["Usługa", "Ilość", "Cena jedn. (zł)", "Wartość (zł)"]])
+            
+            # Tekst do pobrania
+            raport_txt = f"OFERTA: {FIRMA}\nDLA: {klient}\nDATA: {data_dzis}\n"
+            raport_txt += "="*40 + "\n"
+            for _, row in df.iterrows():
+                raport_txt += f"- {row['Usługa']}: {row['Ilość']} x {row['Cena jedn. (zł)']} = {row['Wartość (zł)']:.2f} zł\n"
+            raport_txt += "="*40 + f"\nSUMA NETTO: {suma_netto:,.2f} zł\nVAT {vat_rate}%: {suma_vat:,.2f} zł\nBRUTTO: {suma_brutto:,.2f} zł\n"
+            
+            st.download_button(
+                label="📥 Pobierz gotowy plik oferty",
+                data=raport_txt,
+                file_name=f"Oferta_{klient}_{data_dzis}.txt",
+                mime="text/plain"
+            )
