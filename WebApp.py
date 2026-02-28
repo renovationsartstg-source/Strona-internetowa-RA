@@ -62,8 +62,8 @@ CENNIK = {
     }
 }
 
-# --- 3. PASEK BOCZNY (Z NOWĄ GRAFIKĄ NARZĘDZI) ---
-st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3523/3523887.png", width=100) # Nowa ikona narzędzi
+# --- 3. PASEK BOCZNY ---
+st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3523/3523887.png", width=100)
 st.sidebar.title(SOCIAL)
 st.sidebar.markdown(f"""
 ### 📞 Kontakt
@@ -113,4 +113,32 @@ for i, kategoria in enumerate(CENNIK.keys()):
                 wybrane_uslugi.append({
                     "Kategoria": kategoria,
                     "Usługa": usluga,
-                    "
+                    "Ilość": ilosc,
+                    "Cena jedn. (zł)": cena,
+                    "Wartość (zł)": wartosc
+                })
+                suma_netto += wartosc
+        st.divider()
+
+# --- 6. PODSUMOWANIE I GENEROWANIE RAPORTU ---
+if suma_netto > 0:
+    st.subheader("📊 Podsumowanie Twojej wyceny")
+    vat_rate = st.selectbox("Stawka VAT", [8, 23], help="8% dla osób prywatnych, 23% dla firm")
+    
+    suma_vat = suma_netto * (vat_rate / 100)
+    suma_brutto = suma_netto + suma_vat
+
+    c_n, c_v, c_b = st.columns(3)
+    c_n.metric("Suma Netto", f"{suma_netto:,.2f} zł")
+    c_v.metric(f"VAT {vat_rate}%", f"{suma_vat:,.2f} zł")
+    c_b.metric("DO ZAPŁATY (Brutto)", f"{suma_brutto:,.2f} zł")
+
+    if st.button("📄 Przygotuj profesjonalną ofertę"):
+        if not klient:
+            st.error("Wpisz nazwę klienta lub adres inwestycji!")
+        else:
+            df = pd.DataFrame(wybrane_uslugi)
+            st.markdown(f"### Oferta dla: {klient}")
+            st.table(df[["Usługa", "Ilość", "Cena jedn. (zł)", "Wartość (zł)"]])
+            
+            # POPRAWIONA LINIA 116 -
